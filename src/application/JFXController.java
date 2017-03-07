@@ -7,11 +7,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
@@ -22,6 +24,10 @@ public class JFXController {
 	// the FXML ImageFrame
 	@FXML
 	private ImageView ivCameraFrame;
+	//the FXML Checkbox
+	@FXML
+	private CheckBox chbxCanny;
+	
 	
 	// a timer for acquiring the video stream
 	private ScheduledExecutorService timer;
@@ -104,20 +110,43 @@ public class JFXController {
 				this.capture.read(frame);
 				
 				// if the frame is not empty, process it
-				if (!frame.empty())
-				{	
+				if (!frame.empty())	{
+					if (this.chbxCanny.isSelected()){
+					    frame = this.doCanny(frame);
+					}
 					// convert the Mat object (OpenCV) to Image (JavaFX)
 					imageToShow = mat2Image(frame);
 				}			
 			}
-			catch (Exception e)
-			{
+			catch (Exception e){
 				// log the (full) error
 				System.err.print("ERROR");
 				e.printStackTrace();
 			}
 		}	
 		return imageToShow;
+	}
+	
+	private Mat doCanny(Mat frame)
+	{
+		// init
+		Mat grayImage = new Mat();
+		Mat detectedEdges = new Mat();
+
+		// convert to grayscale
+		Imgproc.cvtColor(frame, grayImage, Imgproc.COLOR_BGR2GRAY);
+		
+		// reduce noise with a 3x3 kernel
+		Imgproc.blur(grayImage, detectedEdges, new Size(3, 3));
+		
+		// canny detector, with ratio of lower:upper threshold of 3:1
+		Imgproc.Canny(detectedEdges, detectedEdges, 50, 150);//this.threshold.getValue(), this.threshold.getValue() * 3);
+		
+		// using Canny's output as a mask, display the result
+		Mat dest = new Mat();
+		frame.copyTo(dest, detectedEdges);
+		
+		return dest;
 	}
 	
 	
