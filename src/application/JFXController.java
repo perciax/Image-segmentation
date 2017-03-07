@@ -27,6 +27,9 @@ public class JFXController {
 	//the FXML Checkbox
 	@FXML
 	private CheckBox chbxCanny;
+	// canny threshold value
+	@FXML
+	private Slider sliThres;
 	
 	
 	// a timer for acquiring the video stream
@@ -140,7 +143,7 @@ public class JFXController {
 		Imgproc.blur(grayImage, detectedEdges, new Size(3, 3));
 		
 		// canny detector, with ratio of lower:upper threshold of 3:1
-		Imgproc.Canny(detectedEdges, detectedEdges, 50, 150);//this.threshold.getValue(), this.threshold.getValue() * 3);
+		Imgproc.Canny(detectedEdges, detectedEdges, this.sliThres.getValue(), this.sliThres.getValue() * 3);
 		
 		// using Canny's output as a mask, display the result
 		Mat dest = new Mat();
