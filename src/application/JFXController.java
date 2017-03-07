@@ -36,36 +36,58 @@ public class JFXController {
 	@FXML
 	protected void startCamera(){
 		
-		// start the video capture
-		this.capture.open(0);  //0 - notebook internal webcam/ 1 - USB Webcam
 		
-		// is the video stream available?
-		if (this.capture.isOpened())
-		{
-			this.cameraActive = true;
+		if (!this.cameraActive){
+			// start the video capture
+			this.capture.open(0);  //0 - notebook internal webcam/ 1 - USB Webcam
 			
-			// grab a frame every 33 ms (30 frames/sec)
-			Runnable frameGrabber = new Runnable() {
+			// is the video stream available?
+			if (this.capture.isOpened())
+			{
+				this.cameraActive = true;
 				
-				@Override
-				public void run()
-				{
-					Image imageToShow = grabFrame();
-					ivCameraFrame.setImage(imageToShow);
-				}
-			};
-			
-			this.timer = Executors.newSingleThreadScheduledExecutor();
-			this.timer.scheduleAtFixedRate(frameGrabber, 0, 33, TimeUnit.MILLISECONDS);
+				// grab a frame every 33 ms (30 frames/sec)
+				Runnable frameGrabber = new Runnable() {
+					
+					@Override
+					public void run()
+					{
+						Image imageToShow = grabFrame();
+						ivCameraFrame.setImage(imageToShow);
+					}
+				};
+				
+				this.timer = Executors.newSingleThreadScheduledExecutor();
+				this.timer.scheduleAtFixedRate(frameGrabber, 0, 33, TimeUnit.MILLISECONDS);
+				
+				this.btnStartCamera.setText("Stop Camera");
+	
+			}
+			else
+			{
+				// log the error
+				System.err.println("Failed to open the camera connection...");
+			}
+		}else{
+			this.cameraActive = false;
+			this.btnStartCamera.setText("Start Camera");
 
-		}
-		else
-		{
-			// log the error
-			System.err.println("Failed to open the camera connection...");
+			// stop the timer
+			try
+			{
+				this.timer.shutdown();
+				this.timer.awaitTermination(33, TimeUnit.MILLISECONDS);
+			}
+			catch (InterruptedException e)
+			{
+				// log the exception
+				System.err.println("Exception in stopping the frame capture, trying to release the camera now... " + e);
+			}
+			
+			// release the camera
+			this.capture.release();
 		}
 	}
-	
 	private Image grabFrame()
 	{
 		// empty Image object
