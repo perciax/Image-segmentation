@@ -1,10 +1,12 @@
 package application;
 	
+import org.opencv.core.Core;
+
 import javafx.application.Application;
-import javafx.stage.Stage;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
-import javafx.fxml.FXMLLoader;
+import javafx.stage.Stage;
 
 
 public class Main extends Application {
@@ -26,6 +28,9 @@ public class Main extends Application {
 	}
 	
 	public static void main(String[] args) {
+		//Load OpenCV
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		//Start JFX application
 		launch(args);
 	}
 }
