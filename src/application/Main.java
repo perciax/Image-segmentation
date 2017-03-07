@@ -16,7 +16,7 @@ public class Main extends Application {
 			//Load FXML resource
 			BorderPane root = (BorderPane)FXMLLoader.load(getClass().getResource("JFX.fxml"));
 			//Create scene
-			Scene scene = new Scene(root,500,400);
+			Scene scene = new Scene(root,500,500);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			//Configure scene
 			primaryStage.setTitle("Image segmentation");

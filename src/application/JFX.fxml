@@ -48,7 +48,7 @@
    <center>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <ImageView fitHeight="300.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="ivCameraFrame" fitHeight="300.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true">
                <VBox.margin>
                   <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                </VBox.margin>
@@ -59,7 +59,7 @@
    <bottom>
       <VBox alignment="CENTER" prefHeight="50.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <Button alignment="CENTER" mnemonicParsing="false" text="Start Camera" />
+            <Button fx:id="btnStartCamera" onAction="#startCamera" alignment="CENTER" mnemonicParsing="false" text="Start Camera" />
          </children>
       </VBox>
    </bottom>
