@@ -1,19 +1,29 @@
 package application;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
@@ -30,6 +40,12 @@ public class JFXController {
 	// canny threshold value
 	@FXML
 	private Slider sliThres;
+	// the FXML checkbox for enabling/disabling background removal
+	@FXML
+	private CheckBox chbxBackgroundRemoval;
+	// the FXML checkbox for switching between background and foreground removal
+	@FXML
+	private CheckBox chbxInverse;
 	
 	
 	// a timer for acquiring the video stream
@@ -48,7 +64,7 @@ public class JFXController {
 		
 		if (!this.cameraActive){
 			// start the video capture
-			this.capture.open(0);  //0 - notebook internal webcam/ 1 - USB Webcam
+			this.capture.open(1);  //0 - notebook internal webcam/ 1 - USB Webcam
 			
 			// is the video stream available?
 			if (this.capture.isOpened())
@@ -116,6 +132,9 @@ public class JFXController {
 				if (!frame.empty())	{
 					if (this.chbxCanny.isSelected()){
 					    frame = this.doCanny(frame);
+					    
+					}else if (this.chbxBackgroundRemoval.isSelected()){
+						frame = this.doBackgroundRemoval(frame);
 					}
 					// convert the Mat object (OpenCV) to Image (JavaFX)
 					imageToShow = mat2Image(frame);
@@ -150,6 +169,70 @@ public class JFXController {
 		frame.copyTo(dest, detectedEdges);
 		
 		return dest;
+	}
+	
+	private Mat doBackgroundRemoval(Mat frame)
+	{
+		// init
+		Mat hsvImg = new Mat();
+		List<Mat> hsvPlanes = new ArrayList<>();
+		Mat thresholdImg = new Mat();
+		
+		int thresh_type = Imgproc.THRESH_BINARY_INV;
+		
+		// threshold the image with the average hue value
+		hsvImg.create(frame.size(), CvType.CV_8U);
+		Imgproc.cvtColor(frame, hsvImg, Imgproc.COLOR_BGR2HSV);
+		Core.split(hsvImg, hsvPlanes);
+		
+		// get the average hue value of the image
+		double threshValue = this.getHistAverage(hsvImg, hsvPlanes.get(0));
+		if (this.chbxInverse.isSelected()) thresh_type = Imgproc.THRESH_BINARY;
+		
+		Imgproc.threshold(hsvPlanes.get(0), thresholdImg, threshValue, 179.0, thresh_type);
+			
+		Imgproc.blur(thresholdImg, thresholdImg, new Size(5, 5));
+		
+		// dilate to fill gaps, erode to smooth edges
+		Imgproc.dilate(thresholdImg, thresholdImg, new Mat(), new Point(-1, -1), 1);
+		Imgproc.erode(thresholdImg, thresholdImg, new Mat(), new Point(-1, -1), 3);
+		
+		Imgproc.threshold(thresholdImg, thresholdImg, threshValue, 179.0, Imgproc.THRESH_BINARY);
+		
+		// create the new image
+		Mat foreground = new Mat(frame.size(), CvType.CV_8UC3, new Scalar(255, 255, 255));
+		frame.copyTo(foreground, thresholdImg);
+		
+		return foreground;
+	}
+	
+	private double getHistAverage(Mat hsvImg, Mat hueValues)
+	{
+		// init
+		double average = 0.0;
+		Mat hist_hue = new Mat();
+		// 0-180: range of Hue values
+		MatOfInt histSize = new MatOfInt(180);
+		List<Mat> hue = new ArrayList<>();
+		hue.add(hueValues);
+		
+		// compute the histogram
+		Imgproc.calcHist(hue, new MatOfInt(0), new Mat(), hist_hue, histSize, new MatOfFloat(0, 179));
+		
+		// get the average Hue value of the image
+		// (sum(bin(h)*h))/(image-height*image-width)
+		// -----------------
+		// equivalent to get the hue of each pixel in the image, add them, and
+		// divide for the image size (height and width)
+		for (int h = 0; h < 180; h++)
+		{
+			// for each bin, get its value and multiply it for the corresponding
+			// hue
+			average += (hist_hue.get(h, 0)[0] * h);
+		}
+		
+		// return the average hue of the image
+		return average = average / hsvImg.size().height / hsvImg.size().width;
 	}
 	
 	

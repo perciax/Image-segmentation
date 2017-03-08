@@ -33,12 +33,12 @@
             <Separator prefWidth="200.0" />
             <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0">
                <children>
-                  <CheckBox mnemonicParsing="false" text="Background removal">
+                  <CheckBox fx:id="chbxBackgroundRemoval" mnemonicParsing="false" text="Background removal">
                      <HBox.margin>
                         <Insets right="20.0" />
                      </HBox.margin>
                   </CheckBox>
-                  <CheckBox mnemonicParsing="false" text="Invert" />
+                  <CheckBox fx:id="chbxInverse" mnemonicParsing="false" text="Invert" />
                </children>
             </HBox>
             <Separator prefWidth="200.0" />
